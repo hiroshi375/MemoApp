@@ -52,10 +52,12 @@ export default function MemoListScreen(props) {
   }, []); // 一度だけ監視させ、表示させる
 
   // memosの中身が0件の場合はこちらのレンダリングを行う
+  // Loading isLoading={isLoading}} を明示的にLoading isLoading={false} にしてローディングを非表示にする
+  // こうしないとローディングが終了しない
   if (memos.length === 0) {
     return (
       <View style={emptyStyles.container}>
-        <Loading isLoading={isLoading} />
+        <Loading isLoading={false} />
         <View style={emptyStyles.inner}>
           <Text style={emptyStyles.title}>最初のメモを作成しよう！</Text>
           <Button
