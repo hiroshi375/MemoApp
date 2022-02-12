@@ -22,6 +22,7 @@
             2, { "namedComponents": "function-declaration" }
         ],
         "no-use-before-define": 0,
-        "react/prop-types": ["error", { "ignore": ["navigation"] }]
+        "react/prop-types": ["error", { "ignore": ["navigation"] }],
+        "import/prefer-default-export": 0
     }
 }

@@ -1,23 +1,55 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { shape, string } from 'prop-types';
 import {
   View, ScrollView, Text, StyleSheet,
 } from 'react-native';
+import firebase from 'firebase';
 
 import CircleButton from '../components/CircleButton';
+// index.jsは特殊なファイルでutilsのディレクトリを指定するだけでindex.jsから関数が読み込まれる
+import { dateToString } from '../utils';
 
 export default function MemoDetailScreen(props) {
-  const { navigation } = props;
+  const { navigation, route } = props;
+  const { id } = route.params;
+  console.log(id);
+  const [memo, setMemo] = useState(null); // 初期値は空
+
+  useEffect(() => {
+    const { currentUser } = firebase.auth();
+    // if文の前にunsubscribeを宣言する。ifの中の変数をreturnで使えないため
+    let unsubscribe = () => {};
+    // currentUserがある時だけ実行する
+    if (currentUser) {
+      const db = firebase.firestore();
+      // ドキュメントの監視
+      const ref = db.collection(`users/${currentUser.uid}/memos`).doc(id);
+      // ドキュメントの監視をキャンセルするためのクリーンナップ関数
+      unsubscribe = ref.onSnapshot((doc) => {
+        console.log(doc.id, doc.data());
+        const data = doc.data();
+        setMemo({
+          id: doc.id,
+          bodyText: data.bodyText,
+          updatedAt: data.updatedAt.toDate(),
+        });
+      });
+    }
+    return unsubscribe; // 監視をキャンセルする
+  }, []);
+
+  // memoが空の場合を考慮して{memo && memo.bodyText}とする ・・・'memo &&'でmemoがfalseやnullでなかった場合のみ となる
+  // numberOfLine={1} 属性指定で一行で表示する
+  // 定義した関数dateToString()を使って日付を表示する
   return (
     <View style={styles.container}>
       <View style={styles.memoHeader}>
-        <Text style={styles.memoTitle}>買い物リスト</Text>
-        <Text style={styles.memoDate}>2020年12月24日 10:00</Text>
+        <Text style={styles.memoTitle} numberOfLine={1}>{memo && memo.bodyText}</Text>
+        <Text style={styles.memoDate}>{memo && dateToString(memo.updatedAt)}</Text>
       </View>
       <ScrollView style={styles.memoBody}>
         <Text style={styles.memoText}>
-          買い物リスト
-          書体やレイアウトなどを確認するために用います。
-          本文用なので使い方を間違えると不自然に見えることもありますので要注意。
+          {memo && memo.bodyText}
         </Text>
       </ScrollView>
       <CircleButton
@@ -28,6 +60,12 @@ export default function MemoDetailScreen(props) {
     </View>
   );
 }
+
+MemoDetailScreen.propTypes = {
+  route: shape({
+    params: shape({ id: string }),
+  }).isRequired,
+};
 
 const styles = StyleSheet.create({
   container: {
